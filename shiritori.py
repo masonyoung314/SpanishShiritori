@@ -1,13 +1,26 @@
 import PySimpleGUI as sg
-import keyboard as k
+import sys
 
 def create_row(row_counter, oneOrTwo):
     # Row number and ONE or TWO
-    row = [
+    if oneOrTwo == "ONE":
+        row = [
+            sg.pin(
+                sg.Col([
+                    [
+                        sg.Text("", key=(f"-WORD{oneOrTwo}-", row_counter), justification="left")
+                    ]
+                ],
+                key=("-ROW-", row_counter)
+                )
+            )
+        ]
+    else:
+        row = [
         sg.pin(
             sg.Col([
                 [
-                    sg.Text("", key=(f"-WORD{oneOrTwo}-", row_counter))
+                    sg.Text("", key=(f"-WORD{oneOrTwo}-", row_counter), expand_x=True, justification="right", size=(110, 1))
                 ]
             ],
             key=("-ROW-", row_counter)
@@ -21,96 +34,107 @@ def process_input(word):
     points = len(word)
     return points
 
-# All the stuff inside your window.
-layout = [  [sg.Text("Player 1: ")],
-            [sg.InputText(key="-PLAYERONEINPUT-")],
-            # [sg.Output()],
-            [sg.Text("Player 2: ")],
-            [sg.InputText(key="-PLAYERTWOINPUT-")],
-            # [sg.Output()],
-            [sg.Button('Ok'), sg.Button('Cancel')] ]
 
-sg.theme("Topanga")
-
-# Create the Window
-introWindow = sg.Window('Spanish Shiritori', layout)
+def game():
 
 
-playerOnePoints = 150
-playerTwoPoints = 150
+    # All the stuff inside your window.
+    layout = [  [sg.Text("Player 1: ")],
+                [sg.InputText(key="-PLAYERONEINPUT-")],
+                # [sg.Output()],
+                [sg.Text("Player 2: ")],
+                [sg.InputText(key="-PLAYERTWOINPUT-")],
+                # [sg.Output()],
+                [sg.Button('Ok'), sg.Button('Cancel')] ]
 
-# Event Loop to process "events" and get the "values" of the inputs
-while True:
-    event, values = introWindow.read()
-    # if user closes window or clicks cancel
+    sg.theme("Topanga")
 
-    if event == sg.WIN_CLOSED or event == 'Cancel':
-        break
+    # Create the Window
+    introWindow = sg.Window('Spanish Shiritori', layout)
 
 
-    player1 = values["-PLAYERONEINPUT-"]
-    player2 = values["-PLAYERTWOINPUT-"]
+    playerOnePoints = 150
+    playerTwoPoints = 150
 
-    layout2 = [
-            [sg.Text("Welcome to Spanish Shiritori!")],
-            [sg.Text("Player 1", key="-PLAYERONE-"), sg.Push(), sg.Text("Player 2", key="-PLAYERTWO-")],   
-            [sg.Column([create_row(0, "ONE")], key="-PLAYERONEROW-"), sg.Column([create_row(0, "TWO")], key="-PLAYERTWOROW-")],
-            [sg.Text(f"Points: {playerOnePoints}", key="-PLAYERONEPOINTS-"), sg.Push(), sg.Text(f"Points: {playerTwoPoints}", key="-PLAYERTWOPOINTS-")],
-            [sg.Input(key="-PLAYERONEWORDINPUT-"), sg.Button("Enter", key="-PLAYER1ENTER-"), sg.Input(key="-PLAYERTWOWORDINPUT-"), sg.Button("Enter", key="-PLAYER2ENTER-")],
-            [sg.Button('Cancel')]
-        ]
-    gameWindow = sg.Window('Second Shiritori', layout2, finalize=True, font=15)
-
-    gameWindow["-PLAYERONE-"].update(player1)
-    gameWindow["-PLAYERTWO-"].update(player2)
-
-    row_counter = 0;
-
+    # Event Loop to process "events" and get the "values" of the inputs
     while True:
-        gameEvent, gameValues = gameWindow.read()
+        event, values = introWindow.read()
+        # if user closes window or clicks cancel
 
-        winner = None
-
-        layout3 = [
-            [sg.Push(), sg.Text("You Win!!!"), sg.Push()],
-            [sg.Push(), sg.Text(winner, key="-WINNER-"), sg.Push()],
-            [sg.Button("Exit", key="-ENDEXIT-"), sg.Button("Play Again", key="-REPEAT-")]
-        ]
-
-        if gameEvent == sg.WIN_CLOSED or gameEvent == 'Cancel':
-            # gameWindow.close()
+        if event == sg.WIN_CLOSED or event == 'Cancel':
             break
-        elif gameEvent == "-PLAYER1ENTER-" or k.is_pressed("enter"):
-            gameWindow.extend_layout(gameWindow["-PLAYERONEROW-"], [create_row(row_counter, "ONE")])
-            gameWindow[("-WORDONE-", row_counter)].update(gameValues["-PLAYERONEWORDINPUT-"])
-            gameWindow["-PLAYERONEPOINTS-"].update(playerOnePoints - process_input(gameValues["-PLAYERONEWORDINPUT-"]))
-            playerOnePoints -= process_input(gameValues["-PLAYERONEWORDINPUT-"])
-                
 
 
-        elif gameEvent == "-PLAYER2ENTER-" or k.is_pressed("enter"):
-            gameWindow.extend_layout(gameWindow["-PLAYERTWOROW-"], [create_row(row_counter, "TWO")])
-            gameWindow[("-WORDTWO-", row_counter)].update(gameValues["-PLAYERTWOWORDINPUT-"])
-            gameWindow["-PLAYERTWOPOINTS-"].update(playerTwoPoints - process_input(gameValues["-PLAYERTWOWORDINPUT-"]))
-            playerTwoPoints -= process_input(gameValues["-PLAYERTWOWORDINPUT-"])
-            row_counter += 1
+        player1 = values["-PLAYERONEINPUT-"]
+        player2 = values["-PLAYERTWOINPUT-"]
 
-        endWindow = sg.Window('Winner', layout3, finalize=True, font=30)
+        layout2 = [
+                [sg.Text("Welcome to Spanish Shiritori!")],
+                [sg.Text("Player 1", key="-PLAYERONE-"), sg.Push(), sg.Text("Player 2", key="-PLAYERTWO-")],   
+                [sg.Column([create_row(0, "ONE")], key="-PLAYERONEROW-"), sg.Column([create_row(0, "TWO")], key="-PLAYERTWOROW-")],
+                [sg.Text(f"Points: {playerOnePoints}", key="-PLAYERONEPOINTS-"), sg.Push(), sg.Text(f"Points: {playerTwoPoints}", key="-PLAYERTWOPOINTS-")],
+                [sg.Input(key="-PLAYERONEWORDINPUT-"), sg.Button("Enter", key="-PLAYER1ENTER-"), sg.Input(key="-PLAYERTWOWORDINPUT-"), sg.Button("Enter", key="-PLAYER2ENTER-")],
+                [sg.Button('Cancel')]
+            ]
+        gameWindow = sg.Window('Second Shiritori', layout2, finalize=True, font=15)
 
-        if playerOnePoints <= 0 or playerTwoPoints <= 0:
-            winner = player1 if playerOnePoints <= 0 else player2
-            endWindow["-WINNER-"].update(winner)
+        gameWindow["-PLAYERONE-"].update(player1)
+        gameWindow["-PLAYERTWO-"].update(player2)
 
-            while True:
-                endEvent, endValues = endWindow.read()
-                
-                if endEvent == sg.WIN_CLOSED or endEvent == "-ENDEXIT-":
-                    endWindow.close()
-                    break
-                
-                
-                
+        row_counter = 0;
+
+        while True:
+            gameEvent, gameValues = gameWindow.read()
+
+            winner = None
+
+            layout3 = [
+                [sg.Push(), sg.Text("You Win!!!"), sg.Push()],
+                [sg.Push(), sg.Text(winner, key="-WINNER-"), sg.Push()],
+                [sg.Button("Exit", key="-ENDEXIT-"), sg.Button("Play Again", key="-REPEAT-")]
+            ]
+
+            if gameEvent == sg.WIN_CLOSED or gameEvent == 'Cancel':
+                # gameWindow.close()
+                break
+            elif gameEvent == "-PLAYER1ENTER-":
+                gameWindow.extend_layout(gameWindow["-PLAYERONEROW-"], [create_row(row_counter, "ONE")])
+                gameWindow[("-WORDONE-", row_counter)].update(gameValues["-PLAYERONEWORDINPUT-"])
+                gameWindow["-PLAYERONEPOINTS-"].update(playerOnePoints - process_input(gameValues["-PLAYERONEWORDINPUT-"]))
+                playerOnePoints -= process_input(gameValues["-PLAYERONEWORDINPUT-"])
+                    
+
+
+            elif gameEvent == "-PLAYER2ENTER-":
+                gameWindow.extend_layout(gameWindow["-PLAYERTWOROW-"], [create_row(row_counter, "TWO")])
+                gameWindow[("-WORDTWO-", row_counter)].update(gameValues["-PLAYERTWOWORDINPUT-"])
+                gameWindow["-PLAYERTWOPOINTS-"].update(playerTwoPoints - process_input(gameValues["-PLAYERTWOWORDINPUT-"]))
+                playerTwoPoints -= process_input(gameValues["-PLAYERTWOWORDINPUT-"])
+                row_counter += 1
+
+
+            if playerOnePoints <= 0 or playerTwoPoints <= 0:
+                endWindow = sg.Window('Winner', layout3, finalize=True, font=30)
+                winner = player1 if playerOnePoints <= 0 else player2
+                endWindow["-WINNER-"].update(winner)
+
+                while True:
+                    endEvent, endValues = endWindow.read()
+                    
+                    if endEvent == sg.WIN_CLOSED or endEvent == "-ENDEXIT-":
+                        endWindow.close()
+                        gameWindow.close()
+                        introWindow.close()
+                        break
+                    elif endEvent == "-REPEAT-":
+                        endWindow.close()
+                        gameWindow.close()
+                        introWindow.close()
+                        game()
         
-        endWindow.close()
-    gameWindow.close()
-introWindow.close()
+            # endWindow.close()
+        gameWindow.close()
+    introWindow.close()
+
+
+game()
