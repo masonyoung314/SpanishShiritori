@@ -1,5 +1,5 @@
 import PySimpleGUI as sg
-import sys
+import time
 
 def create_row(row_counter, oneOrTwo):
     # Row number and ONE or TWO
@@ -68,20 +68,27 @@ def game():
         player1 = values["-PLAYERONEINPUT-"]
         player2 = values["-PLAYERTWOINPUT-"]
 
+        lastLetter1 = '' # last letter of player 1's previous word
+        lastLetter2 = '' # last letter of player 2's previous word
+
         layout2 = [
                 [sg.Text("Welcome to Spanish Shiritori!")],
                 [sg.Text("Player 1", key="-PLAYERONE-"), sg.Push(), sg.Text("Player 2", key="-PLAYERTWO-")],   
                 [sg.Column([create_row(0, "ONE")], key="-PLAYERONEROW-"), sg.Column([create_row(0, "TWO")], key="-PLAYERTWOROW-")],
                 [sg.Text(f"Points: {playerOnePoints}", key="-PLAYERONEPOINTS-"), sg.Push(), sg.Text(f"Points: {playerTwoPoints}", key="-PLAYERTWOPOINTS-")],
-                [sg.Input(key="-PLAYERONEWORDINPUT-"), sg.Button("Enter", key="-PLAYER1ENTER-"), sg.Input(key="-PLAYERTWOWORDINPUT-"), sg.Button("Enter", key="-PLAYER2ENTER-")],
+                [sg.Push(), sg.Text("10", key="-TIMER-"), sg.Push()],
+                [sg.Input(key="-PLAYERONEWORDINPUT-"), sg.Button("Enter", key="-PLAYER1ENTER-"), sg.Push(), sg.Input(key="-PLAYERTWOWORDINPUT-"), sg.Button("Enter", key="-PLAYER2ENTER-")],
+                [sg.Push(), sg.Text(key="-ERROROUTONE-"), sg.Push()],
                 [sg.Button('Cancel')]
             ]
         gameWindow = sg.Window('Second Shiritori', layout2, finalize=True, font=15)
 
-        gameWindow["-PLAYERONE-"].update(player1)
-        gameWindow["-PLAYERTWO-"].update(player2)
+        gameWindow["-PLAYERONE-"].update(f"Player 1: {player1}")
+        gameWindow["-PLAYERTWO-"].update(f"Player 2: {player2}")
 
         row_counter = 0;
+
+        turn = 1
 
         while True:
             gameEvent, gameValues = gameWindow.read()
@@ -94,23 +101,63 @@ def game():
                 [sg.Button("Exit", key="-ENDEXIT-"), sg.Button("Play Again", key="-REPEAT-")]
             ]
 
+
+            seconds = 10
+            time_init = time.time()
+            while seconds > 10:
+                new_time = time.time()
+                if new_time - time_init >= 1:
+                    seconds -= 1
+                    gameWindow["-TIMER-"].update(seconds)
+                elif gameEvent == "-PLAYER1ENTER-" or gameEvent == "-PLAYER2ENTER-" or gameEvent == sg.WIN_CLOSED or gameEvent == "Cancel":
+                    break
+            
+            if time == 0:
+                gameWindow["-ERROROUTONE-"].update("Out of time")
+                
+                turn = 2 if turn == 1 else turn = 1
+
             if gameEvent == sg.WIN_CLOSED or gameEvent == 'Cancel':
                 # gameWindow.close()
                 break
-            elif gameEvent == "-PLAYER1ENTER-":
+            elif gameEvent == "-PLAYER1ENTER-" and turn == 1:
                 gameWindow.extend_layout(gameWindow["-PLAYERONEROW-"], [create_row(row_counter, "ONE")])
                 gameWindow[("-WORDONE-", row_counter)].update(gameValues["-PLAYERONEWORDINPUT-"])
-                gameWindow["-PLAYERONEPOINTS-"].update(playerOnePoints - process_input(gameValues["-PLAYERONEWORDINPUT-"]))
-                playerOnePoints -= process_input(gameValues["-PLAYERONEWORDINPUT-"])
-                    
+                word = gameValues["-PLAYERONEWORDINPUT-"]
 
+                if len(word) < 4:
+                    gameWindow["-ERROROUTONE-"].update("Word must be at least 4 letters.")
+                elif word[0] != lastLetter2 and lastLetter2 != '':
+                    gameWindow["-ERROROUTONE-"].update(f"Your word doesn't start with {lastLetter2}")
 
-            elif gameEvent == "-PLAYER2ENTER-":
+                else:
+                    gameWindow["-PLAYERONEPOINTS-"].update(f"Points: {playerOnePoints - process_input(gameValues["-PLAYERONEWORDINPUT-"])}")
+                    playerOnePoints -= process_input(gameValues["-PLAYERONEWORDINPUT-"])
+                    lastLetter1 = word[len(word) - 1]
+                    gameWindow["-PLAYERTWOWORDINPUT-"].update(lastLetter1)
+                    gameWindow["-ERROROUTONE-"].update("")
+                    turn = 2
+                    print(turn)
+
+            elif gameEvent == "-PLAYER2ENTER-" and turn == 2:
                 gameWindow.extend_layout(gameWindow["-PLAYERTWOROW-"], [create_row(row_counter, "TWO")])
                 gameWindow[("-WORDTWO-", row_counter)].update(gameValues["-PLAYERTWOWORDINPUT-"])
-                gameWindow["-PLAYERTWOPOINTS-"].update(playerTwoPoints - process_input(gameValues["-PLAYERTWOWORDINPUT-"]))
-                playerTwoPoints -= process_input(gameValues["-PLAYERTWOWORDINPUT-"])
-                row_counter += 1
+                word = gameValues["-PLAYERTWOWORDINPUT-"]
+                if len(word) < 4:
+                    gameWindow["-ERROROUTONE-"].update("Word must be at least 4 letters.")
+                elif word[0] != lastLetter1 and lastLetter1 != '':
+                    gameWindow["-ERROROUTONE-"].update(f"Your word doesn't start with {lastLetter1}")
+                else:
+                    gameWindow["-PLAYERTWOPOINTS-"].update(f"Points: {playerTwoPoints - process_input(gameValues["-PLAYERTWOWORDINPUT-"])}")
+                    playerTwoPoints -= process_input(gameValues["-PLAYERTWOWORDINPUT-"])
+                    row_counter += 1
+                    lastLetter2 = word[len(word) - 1]
+                    gameWindow["-PLAYERONEWORDINPUT-"].update(lastLetter2)
+                    gameWindow["-ERROROUTONE-"].update("")
+                    turn = 1
+            
+            elif (gameEvent == "-PLAYER1ENTER-" and turn == 2) or (gameEvent == "-PLAYER2ENTER-" and turn == 1):
+                gameWindow["-ERROROUTONE-"].update("It is not your turn.")
 
 
             if playerOnePoints <= 0 or playerTwoPoints <= 0:
@@ -120,11 +167,11 @@ def game():
 
                 while True:
                     endEvent, endValues = endWindow.read()
+
                     
                     if endEvent == sg.WIN_CLOSED or endEvent == "-ENDEXIT-":
                         endWindow.close()
                         gameWindow.close()
-                        introWindow.close()
                         break
                     elif endEvent == "-REPEAT-":
                         endWindow.close()
