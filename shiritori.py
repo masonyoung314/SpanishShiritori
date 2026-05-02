@@ -76,7 +76,7 @@ def game():
                 [sg.Text("Player 1", key="-PLAYERONE-"), sg.Push(), sg.Text("Player 2", key="-PLAYERTWO-")],   
                 [sg.Column([create_row(0, "ONE")], key="-PLAYERONEROW-"), sg.Column([create_row(0, "TWO")], key="-PLAYERTWOROW-")],
                 [sg.Text(f"Points: {playerOnePoints}", key="-PLAYERONEPOINTS-"), sg.Push(), sg.Text(f"Points: {playerTwoPoints}", key="-PLAYERTWOPOINTS-")],
-                [sg.Push(), sg.Text("10", key="-TIMER-"), sg.Push()],
+                [sg.Push(), sg.Text("10", key="-TIMER-", font="Arial 50 bold"), sg.Push()],
                 [sg.Input(key="-PLAYERONEWORDINPUT-"), sg.Button("Enter", key="-PLAYER1ENTER-"), sg.Push(), sg.Input(key="-PLAYERTWOWORDINPUT-"), sg.Button("Enter", key="-PLAYER2ENTER-")],
                 [sg.Push(), sg.Text(key="-ERROROUTONE-"), sg.Push()],
                 [sg.Button('Cancel')]
@@ -89,9 +89,11 @@ def game():
         row_counter = 0;
 
         turn = 1
+        seconds = 10
+        time_init = time.time()
 
         while True:
-            gameEvent, gameValues = gameWindow.read()
+            gameEvent, gameValues = gameWindow.read(timeout=1000)
 
             winner = None
 
@@ -102,20 +104,20 @@ def game():
             ]
 
 
-            seconds = 10
-            time_init = time.time()
-            while seconds > 10:
+            if gameEvent == sg.TIMEOUT_EVENT:
                 new_time = time.time()
                 if new_time - time_init >= 1:
                     seconds -= 1
                     gameWindow["-TIMER-"].update(seconds)
+                    print(seconds)
                 elif gameEvent == "-PLAYER1ENTER-" or gameEvent == "-PLAYER2ENTER-" or gameEvent == sg.WIN_CLOSED or gameEvent == "Cancel":
+                    seconds = 10
                     break
-            
-            if time == 0:
+                    
+            if seconds <= 0:
                 gameWindow["-ERROROUTONE-"].update("Out of time")
-                
-                turn = 2 if turn == 1 else turn = 1
+                turn = 2 if turn == 1 else 1
+                seconds = 10
 
             if gameEvent == sg.WIN_CLOSED or gameEvent == 'Cancel':
                 # gameWindow.close()
@@ -137,7 +139,8 @@ def game():
                     gameWindow["-PLAYERTWOWORDINPUT-"].update(lastLetter1)
                     gameWindow["-ERROROUTONE-"].update("")
                     turn = 2
-                    print(turn)
+                    seconds = 10
+                    gameWindow["-TIMER-"].update(seconds)
 
             elif gameEvent == "-PLAYER2ENTER-" and turn == 2:
                 gameWindow.extend_layout(gameWindow["-PLAYERTWOROW-"], [create_row(row_counter, "TWO")])
@@ -155,6 +158,8 @@ def game():
                     gameWindow["-PLAYERONEWORDINPUT-"].update(lastLetter2)
                     gameWindow["-ERROROUTONE-"].update("")
                     turn = 1
+                    seconds = 10
+                    gameWindow["-TIMER-"].update(seconds)
             
             elif (gameEvent == "-PLAYER1ENTER-" and turn == 2) or (gameEvent == "-PLAYER2ENTER-" and turn == 1):
                 gameWindow["-ERROROUTONE-"].update("It is not your turn.")
