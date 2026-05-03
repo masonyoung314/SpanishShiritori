@@ -1,5 +1,13 @@
 import PySimpleGUI as sg
 import time
+import enchant
+
+# Maybe also include option to play this game in English
+
+# dict = enchant.Dict("en_US")
+
+dict = enchant.Dict("es")
+
 
 def create_row(row_counter, oneOrTwo):
     # Row number and ONE or TWO
@@ -33,6 +41,12 @@ def create_row(row_counter, oneOrTwo):
 def process_input(word):
     points = len(word)
     return points
+
+
+# Check if word exists
+# Pass in the word and the dictionary
+def is_word(d, word):
+    return True if d.check(word) == True else False
 
 
 def game():
@@ -78,7 +92,7 @@ def game():
                 [sg.Text(f"Points: {playerOnePoints}", key="-PLAYERONEPOINTS-"), sg.Push(), sg.Text(f"Points: {playerTwoPoints}", key="-PLAYERTWOPOINTS-")],
                 [sg.Push(), sg.Text("10", key="-TIMER-", font="Arial 50 bold"), sg.Push()],
                 [sg.Input(key="-PLAYERONEWORDINPUT-"), sg.Button("Enter", key="-PLAYER1ENTER-"), sg.Push(), sg.Input(key="-PLAYERTWOWORDINPUT-"), sg.Button("Enter", key="-PLAYER2ENTER-")],
-                [sg.Push(), sg.Text(key="-ERROROUTONE-"), sg.Push()],
+                [sg.Push(), sg.Text(key="-ERROROUTONE-", font="Arial 20 bold"), sg.Push()],
                 [sg.Button('Cancel')]
             ]
         gameWindow = sg.Window('Second Shiritori', layout2, finalize=True, font=15)
@@ -131,6 +145,8 @@ def game():
                     gameWindow["-ERROROUTONE-"].update("Word must be at least 4 letters.")
                 elif word[0] != lastLetter2 and lastLetter2 != '':
                     gameWindow["-ERROROUTONE-"].update(f"Your word doesn't start with {lastLetter2}")
+                elif not is_word(dict, word):
+                    gameWindow["-ERROROUTONE-"].update(f"{word} no existe.")
 
                 else:
                     gameWindow["-PLAYERONEPOINTS-"].update(f"Points: {playerOnePoints - process_input(gameValues["-PLAYERONEWORDINPUT-"])}")
@@ -150,6 +166,8 @@ def game():
                     gameWindow["-ERROROUTONE-"].update("Word must be at least 4 letters.")
                 elif word[0] != lastLetter1 and lastLetter1 != '':
                     gameWindow["-ERROROUTONE-"].update(f"Your word doesn't start with {lastLetter1}")
+                elif not is_word(dict, word):
+                    gameWindow["-ERROROUTONE-"].update(f"{word} no existe.")
                 else:
                     gameWindow["-PLAYERTWOPOINTS-"].update(f"Points: {playerTwoPoints - process_input(gameValues["-PLAYERTWOWORDINPUT-"])}")
                     playerTwoPoints -= process_input(gameValues["-PLAYERTWOWORDINPUT-"])
