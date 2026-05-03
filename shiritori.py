@@ -1,12 +1,16 @@
 import PySimpleGUI as sg
 import time
 import enchant
+import random
+import string
 
-# Maybe also include option to play this game in English
 
-# dict = enchant.Dict("en_US")
 
-dict = enchant.Dict("es")
+
+# theme = sg.LOOK_AND_FEEL_TABLE['Topanga']
+
+# for key, value in theme.items():
+#     print(f"{key}: {value}")
 
 
 def create_row(row_counter, oneOrTwo):
@@ -49,19 +53,140 @@ def is_word(d, word):
     return True if d.check(word) == True else False
 
 
-def game():
+# Message Codes:
+# 1 = Player 1 
+# 2 = Player 2
+# 3 = Cancel
+# 4 = Spanish
+# 5 = Welcome
+# 6 = Points
+# 7 = Enter
+# 8 = Win
+# 9 = Again
+# 10 = Instructions
+# 11 = Rules
 
+def print_message(spanish, message_code):
+    message = ""
 
+    if spanish == True:
+        if message_code == 1:
+            message = "Jugador 1:"
+        elif message_code == 2:
+            message = "Jugador 2:"
+        elif message_code == 3:
+            message = "Salir"
+        elif message_code == 4:
+            message = "Español"
+        elif message_code == 5:
+            message = "¡Bienvenidos a Shiritori en español!"
+        elif message_code == 6:
+            message = "Puntos: "
+        elif message_code == 7:
+            message = "Ok"
+        elif message_code == 8:
+            message = "Has ganado!!!"
+        elif message_code == 9:
+            message = "Jugar otra vez"
+        elif message_code == 10:
+            message = "Instrucciones"
+        elif message_code == 11:
+            message = """
+            Reglas:
+            - Tu palabra debe contener al menos 4 letras.
+            - Tu palabra debe empezar por la letra al final de la palabra del otro jugador.
+            - Tienes que poner tu palabra antes de que se acaba el tiempo (10 segundos).
+            - Tus puntos bajan por la longitud de tu palabra.
+            - El primer jugador que tiene 0 o menos puntos gana!
+            """
+
+    else:
+        if message_code == 1:
+            message = "Player 1:"
+        elif message_code == 2:
+            message = "Player 2:"
+        elif message_code == 3:
+            message = "Exit"
+        elif message_code == 4:
+            message = "Spanish"
+        elif message_code == 5:
+            message = "Welcome to Spanish Shiritori!"
+        elif message_code == 6:
+            message = "Points: "
+        elif message_code == 7:
+            message = "Ok"
+        elif message_code == 8:
+            message = "You Win!!!"
+        elif message_code == 9:
+            message = "Play Again"
+        elif message_code == 10:
+            message = "Instructions"
+        elif message_code == 11:
+            message = """
+            Rules:
+            - Your word must have at least 4 letters.
+            - Your word must start with the last letter of the previous word entered by the other player.
+            - You must respond with your word before the timer ends (10 seconds).
+            - Your points lower relative correspondingly with the length of your word.
+            - The first player to reach 0 or less points wins!
+            """
+
+    return message
+
+# Error Codes
+# 1 = Out of time
+# 2 = Word not long enough
+# 3 = Word doesn't start with correct letter
+# 4 = Word doesn't exist
+# 5 = Not your turn
+
+def print_error(spanish, code, correct_letter = "", incorrect_word=""):
+    message = ""
+    if spanish == True:
+        if code == 1:
+            message = "Oh no! Tu tiempo se ha acabado."
+        elif code == 2:
+            message = "Tu palabra no tiene al menos 4 letras."
+        elif code == 3:
+            message = f"Tu palabra no empieza con la letra {correct_letter}."
+        elif code == 4:
+            message = f"{incorrect_word} no existe."
+        elif code == 5:
+            message = "No es tu turno."
+    else:
+        if code == 1:
+            message = "Oh no! You ran out of time."
+        elif code == 2:
+            message = "Word must have at least 4 letters."
+        elif code == 3:
+            message = f"Your word doesn't start with {correct_letter}."
+        elif code == 4:
+            message = f"{incorrect_word} doesn't exist."
+        elif code == 5:
+            message = "It is not your turn."
+
+    return message
+
+def main():
+
+    global DICT
+    DICT = enchant.Dict("es")
     # All the stuff inside your window.
-    layout = [  [sg.Text("Player 1: ")],
+    layout = [  [sg.Text(print_message(spanish=1, message_code=1), key="-PLAYERONENAME-", text_color="#E7C855", background_color="#292923")],
                 [sg.InputText(key="-PLAYERONEINPUT-")],
                 # [sg.Output()],
-                [sg.Text("Player 2: ")],
+                [sg.Text(print_message(spanish=1, message_code=2), key="-PLAYERTWONAME-", text_color="#E7C855", background_color="#292923")],
                 [sg.InputText(key="-PLAYERTWOINPUT-")],
                 # [sg.Output()],
-                [sg.Button('Ok'), sg.Button('Cancel')] ]
+                [sg.Button('Ok'), sg.Button(print_message(spanish=1, message_code=10), key="-INSTRUCTIONS-"), sg.Button(print_message(spanish=1, message_code=3), key="-CANCEL-"), sg.Image(toggle_btn_on, key='-TOGGLE-GRAPHIC-', enable_events=True, metadata=False, background_color="#292923", size=(50,50), zoom=1, subsample=20),
+                 sg.Text(print_message(spanish=1, message_code=4), background_color="#292923", key="-SPANISH-", text_color="#E7C855")],
+                 [sg.Text("", key="-INSTRUCTIONSINFO-", text_color="#E7C855", background_color="#292923")]
+                 
+            ]
 
     sg.theme("Topanga")
+
+    alphabet = list(string.ascii_lowercase)
 
     # Create the Window
     introWindow = sg.Window('Spanish Shiritori', layout)
@@ -70,141 +195,172 @@ def game():
     playerOnePoints = 150
     playerTwoPoints = 150
 
+    spanish = True
+    instructions = False
     # Event Loop to process "events" and get the "values" of the inputs
     while True:
         event, values = introWindow.read()
         # if user closes window or clicks cancel
 
-        if event == sg.WIN_CLOSED or event == 'Cancel':
+        if event == sg.WIN_CLOSED or event == "-CANCEL-":
             break
 
+        elif event == "-TOGGLE-GRAPHIC-":
+            introWindow['-TOGGLE-GRAPHIC-'].metadata = not introWindow['-TOGGLE-GRAPHIC-'].metadata
+            introWindow['-TOGGLE-GRAPHIC-'].update(toggle_btn_off if introWindow['-TOGGLE-GRAPHIC-'].metadata else toggle_btn_on, subsample=20)
+            spanish = False if spanish == True else True
+            introWindow["-PLAYERONENAME-"].update(print_message(spanish, 1))
+            introWindow["-PLAYERTWONAME-"].update(print_message(spanish, 2))
+            introWindow["-CANCEL-"].update(print_message(spanish, 3))
+            introWindow["-SPANISH-"].update(print_message(spanish, 4))
+            if instructions == True:
+                introWindow["-INSTRUCTIONSINFO-"].update(print_message(spanish, 11))
 
-        player1 = values["-PLAYERONEINPUT-"]
-        player2 = values["-PLAYERTWOINPUT-"]
+            DICT = enchant.Dict("en_US") if spanish == False else enchant.Dict("es")
 
-        lastLetter1 = '' # last letter of player 1's previous word
-        lastLetter2 = '' # last letter of player 2's previous word
+        elif event == "-INSTRUCTIONS-":
+            if instructions == False:
+                introWindow["-INSTRUCTIONSINFO-"].update(print_message(spanish, 11))
+                instructions = True
+            else:
+                introWindow["-INSTRUCTIONSINFO-"].update("")
+                instructions = False
 
-        layout2 = [
-                [sg.Text("Welcome to Spanish Shiritori!")],
-                [sg.Text("Player 1", key="-PLAYERONE-"), sg.Push(), sg.Text("Player 2", key="-PLAYERTWO-")],   
-                [sg.Column([create_row(0, "ONE")], key="-PLAYERONEROW-"), sg.Column([create_row(0, "TWO")], key="-PLAYERTWOROW-")],
-                [sg.Text(f"Points: {playerOnePoints}", key="-PLAYERONEPOINTS-"), sg.Push(), sg.Text(f"Points: {playerTwoPoints}", key="-PLAYERTWOPOINTS-")],
-                [sg.Push(), sg.Text("10", key="-TIMER-", font="Arial 50 bold"), sg.Push()],
-                [sg.Input(key="-PLAYERONEWORDINPUT-"), sg.Button("Enter", key="-PLAYER1ENTER-"), sg.Push(), sg.Input(key="-PLAYERTWOWORDINPUT-"), sg.Button("Enter", key="-PLAYER2ENTER-")],
-                [sg.Push(), sg.Text(key="-ERROROUTONE-", font="Arial 20 bold"), sg.Push()],
-                [sg.Button('Cancel')]
-            ]
-        gameWindow = sg.Window('Second Shiritori', layout2, finalize=True, font=15)
+        elif event == "Ok":
 
-        gameWindow["-PLAYERONE-"].update(f"Player 1: {player1}")
-        gameWindow["-PLAYERTWO-"].update(f"Player 2: {player2}")
+            player1 = values["-PLAYERONEINPUT-"]
+            player2 = values["-PLAYERTWOINPUT-"]
 
-        row_counter = 0;
+            lastLetter1 = '' # last letter of player 1's previous word
+            lastLetter2 = '' # last letter of player 2's previous word
 
-        turn = 1
-        seconds = 10
-        time_init = time.time()
-
-        while True:
-            gameEvent, gameValues = gameWindow.read(timeout=1000)
-
-            winner = None
-
-            layout3 = [
-                [sg.Push(), sg.Text("You Win!!!"), sg.Push()],
-                [sg.Push(), sg.Text(winner, key="-WINNER-"), sg.Push()],
-                [sg.Button("Exit", key="-ENDEXIT-"), sg.Button("Play Again", key="-REPEAT-")]
-            ]
-
-
-            if gameEvent == sg.TIMEOUT_EVENT:
-                new_time = time.time()
-                if new_time - time_init >= 1:
-                    seconds -= 1
-                    gameWindow["-TIMER-"].update(seconds)
-                    print(seconds)
-                elif gameEvent == "-PLAYER1ENTER-" or gameEvent == "-PLAYER2ENTER-" or gameEvent == sg.WIN_CLOSED or gameEvent == "Cancel":
-                    seconds = 10
-                    break
-                    
-            if seconds <= 0:
-                gameWindow["-ERROROUTONE-"].update("Out of time")
-                turn = 2 if turn == 1 else 1
-                seconds = 10
-
-            if gameEvent == sg.WIN_CLOSED or gameEvent == 'Cancel':
-                # gameWindow.close()
-                break
-            elif gameEvent == "-PLAYER1ENTER-" and turn == 1:
-                gameWindow.extend_layout(gameWindow["-PLAYERONEROW-"], [create_row(row_counter, "ONE")])
-                gameWindow[("-WORDONE-", row_counter)].update(gameValues["-PLAYERONEWORDINPUT-"])
-                word = gameValues["-PLAYERONEWORDINPUT-"]
-
-                if len(word) < 4:
-                    gameWindow["-ERROROUTONE-"].update("Word must be at least 4 letters.")
-                elif word[0] != lastLetter2 and lastLetter2 != '':
-                    gameWindow["-ERROROUTONE-"].update(f"Your word doesn't start with {lastLetter2}")
-                elif not is_word(dict, word):
-                    gameWindow["-ERROROUTONE-"].update(f"{word} no existe.")
-
-                else:
-                    gameWindow["-PLAYERONEPOINTS-"].update(f"Points: {playerOnePoints - process_input(gameValues["-PLAYERONEWORDINPUT-"])}")
-                    playerOnePoints -= process_input(gameValues["-PLAYERONEWORDINPUT-"])
-                    lastLetter1 = word[len(word) - 1]
-                    gameWindow["-PLAYERTWOWORDINPUT-"].update(lastLetter1)
-                    gameWindow["-ERROROUTONE-"].update("")
-                    turn = 2
-                    seconds = 10
-                    gameWindow["-TIMER-"].update(seconds)
-
-            elif gameEvent == "-PLAYER2ENTER-" and turn == 2:
-                gameWindow.extend_layout(gameWindow["-PLAYERTWOROW-"], [create_row(row_counter, "TWO")])
-                gameWindow[("-WORDTWO-", row_counter)].update(gameValues["-PLAYERTWOWORDINPUT-"])
-                word = gameValues["-PLAYERTWOWORDINPUT-"]
-                if len(word) < 4:
-                    gameWindow["-ERROROUTONE-"].update("Word must be at least 4 letters.")
-                elif word[0] != lastLetter1 and lastLetter1 != '':
-                    gameWindow["-ERROROUTONE-"].update(f"Your word doesn't start with {lastLetter1}")
-                elif not is_word(dict, word):
-                    gameWindow["-ERROROUTONE-"].update(f"{word} no existe.")
-                else:
-                    gameWindow["-PLAYERTWOPOINTS-"].update(f"Points: {playerTwoPoints - process_input(gameValues["-PLAYERTWOWORDINPUT-"])}")
-                    playerTwoPoints -= process_input(gameValues["-PLAYERTWOWORDINPUT-"])
-                    row_counter += 1
-                    lastLetter2 = word[len(word) - 1]
-                    gameWindow["-PLAYERONEWORDINPUT-"].update(lastLetter2)
-                    gameWindow["-ERROROUTONE-"].update("")
-                    turn = 1
-                    seconds = 10
-                    gameWindow["-TIMER-"].update(seconds)
-            
-            elif (gameEvent == "-PLAYER1ENTER-" and turn == 2) or (gameEvent == "-PLAYER2ENTER-" and turn == 1):
-                gameWindow["-ERROROUTONE-"].update("It is not your turn.")
+            layout2 = [
+                    [sg.Text(print_message(spanish, 5))],
+                    [sg.Text(print_message(spanish, 1), key="-PLAYERONE-"), sg.Push(), sg.Text(print_message(spanish, 2), key="-PLAYERTWO-")],   
+                    [sg.Column([create_row(0, "ONE")], key="-PLAYERONEROW-"), sg.Column([create_row(0, "TWO")], key="-PLAYERTWOROW-")],
+                    [sg.Text(f"{print_message(spanish, 6)} {playerOnePoints}", key="-PLAYERONEPOINTS-"), sg.Push(), sg.Text(f"{print_message(spanish, 6)} {playerTwoPoints}", key="-PLAYERTWOPOINTS-")],
+                    [sg.Push(), sg.Text("10", key="-TIMER-", font="Arial 50 bold"), sg.Push()],
+                    [sg.Input(default_text=random.choice(alphabet), key="-PLAYERONEWORDINPUT-"), sg.Button(print_message(spanish, 7), key="-PLAYER1ENTER-"), sg.Push(), sg.Input(key="-PLAYERTWOWORDINPUT-"), sg.Button(print_message(spanish, 7), key="-PLAYER2ENTER-")],
+                    [sg.Push(), sg.Text(key="-ERROROUTONE-", font="Arial 20 bold"), sg.Push()],
+                    [sg.Button(print_message(spanish, 3), key="-CANCEL-")]
+                ]
+            gameWindow = sg.Window('Game', layout2, finalize=True, font=15)
 
 
-            if playerOnePoints <= 0 or playerTwoPoints <= 0:
-                endWindow = sg.Window('Winner', layout3, finalize=True, font=30)
-                winner = player1 if playerOnePoints <= 0 else player2
-                endWindow["-WINNER-"].update(winner)
+            gameWindow["-PLAYERONE-"].update(f"{print_message(spanish, 1)} {player1}")
+            gameWindow["-PLAYERTWO-"].update(f"{print_message(spanish, 2)} {player2}")
 
-                while True:
-                    endEvent, endValues = endWindow.read()
 
-                    
-                    if endEvent == sg.WIN_CLOSED or endEvent == "-ENDEXIT-":
-                        endWindow.close()
-                        gameWindow.close()
+            row_counter = 0;
+
+            turn = 1
+            seconds = 10
+            time_init = time.time()
+
+            while True:
+                gameEvent, gameValues = gameWindow.read(timeout=1000)
+
+                winner = None
+
+                layout3 = [
+                    [sg.Push(), sg.Text(print_message(spanish, 8)), sg.Push()],
+                    [sg.Push(), sg.Text(winner, key="-WINNER-"), sg.Push()],
+                    [sg.Button(print_message(spanish, 3), key="-ENDEXIT-"), sg.Button(print_message(spanish, 9), key="-REPEAT-")]
+                ]
+
+
+                if gameEvent == sg.TIMEOUT_EVENT:
+                    new_time = time.time()
+                    if new_time - time_init >= 1:
+                        seconds -= 1
+                        gameWindow["-TIMER-"].update(seconds)
+                    elif gameEvent == "-PLAYER1ENTER-" or gameEvent == "-PLAYER2ENTER-" or gameEvent == sg.WIN_CLOSED or gameEvent == "Cancel":
+                        seconds = 10
                         break
-                    elif endEvent == "-REPEAT-":
-                        endWindow.close()
-                        gameWindow.close()
-                        introWindow.close()
-                        game()
-        
-            # endWindow.close()
-        gameWindow.close()
+                        
+                if seconds <= 0:
+                    gameWindow["-ERROROUTONE-"].update(print_error(spanish, 1))
+                    turn = 2 if turn == 1 else 1
+                    seconds = 10
+
+                if gameEvent == sg.WIN_CLOSED or gameEvent == "-CANCEL-":
+                    # gameWindow.close()
+                    break
+                elif gameEvent == "-PLAYER1ENTER-" and turn == 1:
+                    gameWindow.extend_layout(gameWindow["-PLAYERONEROW-"], [create_row(row_counter, "ONE")])
+                    gameWindow[("-WORDONE-", row_counter)].update(gameValues["-PLAYERONEWORDINPUT-"])
+                    word = gameValues["-PLAYERONEWORDINPUT-"]
+
+                    if len(word) < 4:
+                        gameWindow["-ERROROUTONE-"].update(print_error(spanish, 2))
+                    elif word[0] != lastLetter2 and lastLetter2 != '':
+                        gameWindow["-ERROROUTONE-"].update(print_error(spanish, 3, lastLetter2))
+                        gameWindow["-PLAYERONEWORDINPUT-"].update(lastLetter2)
+                    elif not is_word(DICT, word):
+                        gameWindow["-ERROROUTONE-"].update(print_error(spanish, 4, incorrect_word={word}))
+
+                    else:
+                        gameWindow["-PLAYERONEPOINTS-"].update(f"Points: {playerOnePoints - process_input(gameValues["-PLAYERONEWORDINPUT-"])}")
+                        playerOnePoints -= process_input(gameValues["-PLAYERONEWORDINPUT-"])
+                        lastLetter1 = word[len(word) - 1]
+                        gameWindow["-PLAYERTWOWORDINPUT-"].update(lastLetter1)
+                        gameWindow["-ERROROUTONE-"].update("")
+                        turn = 2
+                        seconds = 10
+                        gameWindow["-TIMER-"].update(seconds)
+
+                elif gameEvent == "-PLAYER2ENTER-" and turn == 2:
+                    gameWindow.extend_layout(gameWindow["-PLAYERTWOROW-"], [create_row(row_counter, "TWO")])
+                    gameWindow[("-WORDTWO-", row_counter)].update(gameValues["-PLAYERTWOWORDINPUT-"])
+                    word = gameValues["-PLAYERTWOWORDINPUT-"]
+                    if len(word) < 4:
+                        gameWindow["-ERROROUTONE-"].update(print_error(spanish, 2))
+                    elif word[0] != lastLetter1 and lastLetter1 != '':
+                        gameWindow["-ERROROUTONE-"].update(print_error(spanish, 3, lastLetter1))
+                        gameWindow["-PLAYERTWOWORDINPUT-"].update(lastLetter1)
+                    elif not is_word(DICT, word):
+                        gameWindow["-ERROROUTONE-"].update(print_error(spanish, 4, incorrect_word={word}))
+                    else:
+                        gameWindow["-PLAYERTWOPOINTS-"].update(f"Points: {playerTwoPoints - process_input(gameValues["-PLAYERTWOWORDINPUT-"])}")
+                        playerTwoPoints -= process_input(gameValues["-PLAYERTWOWORDINPUT-"])
+                        row_counter += 1
+                        lastLetter2 = word[len(word) - 1]
+                        gameWindow["-PLAYERONEWORDINPUT-"].update(lastLetter2)
+                        gameWindow["-ERROROUTONE-"].update("")
+                        turn = 1
+                        seconds = 10
+                        gameWindow["-TIMER-"].update(seconds)
+                
+                elif (gameEvent == "-PLAYER1ENTER-" and turn == 2) or (gameEvent == "-PLAYER2ENTER-" and turn == 1):
+                    gameWindow["-ERROROUTONE-"].update(print_error(spanish, 5))
+
+
+                if playerOnePoints <= 0 or playerTwoPoints <= 0:
+                    endWindow = sg.Window('Winner', layout3, finalize=True, font=30)
+                    winner = player1 if playerOnePoints <= 0 else player2
+                    endWindow["-WINNER-"].update(winner)
+
+                    while True:
+                        endEvent, endValues = endWindow.read()
+
+                        
+                        if endEvent == sg.WIN_CLOSED or endEvent == "-ENDEXIT-":
+                            endWindow.close()
+                            gameWindow.close()
+                            break
+                        elif endEvent == "-REPEAT-":
+                            endWindow.close()
+                            gameWindow.close()
+                            introWindow.close()
+                            main()
+            
+                # endWindow.close()
+            gameWindow.close()
     introWindow.close()
 
 
-game()
+if __name__ == "__main__":
+    toggle_btn_off = "/Users/masonyoung/Desktop/Personal_Projects/Shiritori/RealToggleOff.png"
+    toggle_btn_on = "/Users/masonyoung/Desktop/Personal_Projects/Shiritori/RealToggleOn.png"
+
+    main()
