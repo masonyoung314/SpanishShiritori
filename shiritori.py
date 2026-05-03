@@ -241,7 +241,7 @@ def main():
                     [sg.Text(f"{print_message(spanish, 6)} {playerOnePoints}", key="-PLAYERONEPOINTS-"), sg.Push(), sg.Text(f"{print_message(spanish, 6)} {playerTwoPoints}", key="-PLAYERTWOPOINTS-")],
                     [sg.Push(), sg.Text("10", key="-TIMER-", font="Arial 50 bold"), sg.Push()],
                     [sg.Input(default_text=random.choice(alphabet), key="-PLAYERONEWORDINPUT-"), sg.Button(print_message(spanish, 7), key="-PLAYER1ENTER-"), sg.Push(), sg.Input(key="-PLAYERTWOWORDINPUT-"), sg.Button(print_message(spanish, 7), key="-PLAYER2ENTER-")],
-                    [sg.Push(), sg.Text(key="-ERROROUTONE-", font="Arial 20 bold"), sg.Push()],
+                    [sg.Push(), sg.Text("", key="-ERROROUTONE-", font="Arial 20 bold"), sg.Push()],
                     [sg.Button(print_message(spanish, 3), key="-CANCEL-")]
                 ]
             gameWindow = sg.Window('Game', layout2, finalize=True, font=15)
@@ -280,6 +280,7 @@ def main():
                         
                 if seconds <= 0:
                     gameWindow["-ERROROUTONE-"].update(print_error(spanish, 1))
+                    gameWindow["-PLAYERONEWORDINPUT-"].update(lastLetter1) if turn == 2 else gameWindow["-PLAYERTWOWORDINPUT-"].update(lastLetter2)
                     turn = 2 if turn == 1 else 1
                     seconds = 10
 
