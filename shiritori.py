@@ -6,6 +6,10 @@ import string
 
 
 
+orange = "#c15226"
+purple = "#7a4d5f"
+green = "#889743"
+
 
 # theme = sg.LOOK_AND_FEEL_TABLE['Topanga']
 
@@ -20,7 +24,7 @@ def create_row(row_counter, oneOrTwo):
             sg.pin(
                 sg.Col([
                     [
-                        sg.Text("", key=(f"-WORD{oneOrTwo}-", row_counter), justification="left")
+                        sg.Text("", key=(f"-WORD{oneOrTwo}-", row_counter), justification="left", text_color=green)
                     ]
                 ],
                 key=("-ROW-", row_counter)
@@ -236,12 +240,12 @@ def main():
 
             layout2 = [
                     [sg.Text(print_message(spanish, 5))],
-                    [sg.Text(print_message(spanish, 1), key="-PLAYERONE-"), sg.Push(), sg.Text(print_message(spanish, 2), key="-PLAYERTWO-")],   
+                    [sg.Text(print_message(spanish, 1), key="-PLAYERONE-"), sg.Push(), sg.Text(print_message(spanish, 2), key="-PLAYERTWO-", text_color=green)],   
                     [sg.Column([create_row(0, "ONE")], key="-PLAYERONEROW-"), sg.Column([create_row(0, "TWO")], key="-PLAYERTWOROW-")],
-                    [sg.Text(f"{print_message(spanish, 6)} {playerOnePoints}", key="-PLAYERONEPOINTS-"), sg.Push(), sg.Text(f"{print_message(spanish, 6)} {playerTwoPoints}", key="-PLAYERTWOPOINTS-")],
+                    [sg.Text(f"{print_message(spanish, 6)} {playerOnePoints}", key="-PLAYERONEPOINTS-"), sg.Push(), sg.Text(f"{print_message(spanish, 6)} {playerTwoPoints}", key="-PLAYERTWOPOINTS-", text_color=green)],
                     [sg.Push(), sg.Text("10", key="-TIMER-", font="Arial 50 bold"), sg.Push()],
-                    [sg.Input(default_text=random.choice(alphabet), key="-PLAYERONEWORDINPUT-"), sg.Button(print_message(spanish, 7), key="-PLAYER1ENTER-"), sg.Push(), sg.Input(key="-PLAYERTWOWORDINPUT-"), sg.Button(print_message(spanish, 7), key="-PLAYER2ENTER-")],
-                    [sg.Push(), sg.Text("", key="-ERROROUTONE-", font="Arial 20 bold"), sg.Push()],
+                    [sg.Input(default_text=random.choice(alphabet), key="-PLAYERONEWORDINPUT-"), sg.Button(print_message(spanish, 7), key="-PLAYER1ENTER-"), sg.Push(), sg.Input(key="-PLAYERTWOWORDINPUT-", text_color=green), sg.Button(print_message(spanish, 7), key="-PLAYER2ENTER-", button_color=(green, "#284B5A"))],
+                    [sg.Push(), sg.Text("", key="-ERROROUTONE-", font="Arial 20 bold", text_color=orange), sg.Push()],
                     [sg.Button(print_message(spanish, 3), key="-CANCEL-")]
                 ]
             gameWindow = sg.Window('Game', layout2, finalize=True, font=15)
