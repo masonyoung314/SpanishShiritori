@@ -24,7 +24,7 @@ def create_row(row_counter, oneOrTwo):
             sg.pin(
                 sg.Col([
                     [
-                        sg.Text("", key=(f"-WORD{oneOrTwo}-", row_counter), justification="left", text_color=green)
+                        sg.Text("", key=(f"-WORD{oneOrTwo}-", row_counter), justification="left")
                     ]
                 ],
                 key=("-ROW-", row_counter)
@@ -36,7 +36,7 @@ def create_row(row_counter, oneOrTwo):
         sg.pin(
             sg.Col([
                 [
-                    sg.Text("", key=(f"-WORD{oneOrTwo}-", row_counter), expand_x=True, justification="right", size=(110, 1))
+                    sg.Text("", key=(f"-WORD{oneOrTwo}-", row_counter), expand_x=True, justification="right", size=(110, 1), text_color=green)
                 ]
             ],
             key=("-ROW-", row_counter)
@@ -100,6 +100,7 @@ def print_message(spanish, message_code):
             - Tu palabra debe contener al menos 4 letras.
             - Tu palabra debe empezar por la letra al final de la palabra del otro jugador.
             - Tienes que poner tu palabra antes de que se acaba el tiempo (10 segundos).
+            - No word can be used twice.
             - Tus puntos bajan por la longitud de tu palabra.
             - El primer jugador que tiene 0 o menos puntos gana!
             """
@@ -131,6 +132,7 @@ def print_message(spanish, message_code):
             - Your word must have at least 4 letters.
             - Your word must start with the last letter of the previous word entered by the other player.
             - You must respond with your word before the timer ends (10 seconds).
+            - No puedes repetir palabras.
             - Your points lower relative correspondingly with the length of your word.
             - The first player to reach 0 or less points wins!
             """
@@ -157,6 +159,8 @@ def print_error(spanish, code, correct_letter = "", incorrect_word=""):
             message = f"{incorrect_word} no existe."
         elif code == 5:
             message = "No es tu turno."
+        elif code == 6:
+            message = "No puedes repetir palabras."
     else:
         if code == 1:
             message = "Oh no! You ran out of time."
@@ -168,6 +172,8 @@ def print_error(spanish, code, correct_letter = "", incorrect_word=""):
             message = f"{incorrect_word} doesn't exist."
         elif code == 5:
             message = "It is not your turn."
+        elif code == 6:
+            message = "You can't use the same word twice."
 
     return message
 
@@ -180,7 +186,7 @@ def main():
                 [sg.InputText(key="-PLAYERONEINPUT-")],
                 # [sg.Output()],
                 [sg.Text(print_message(spanish=1, message_code=2), key="-PLAYERTWONAME-", text_color="#E7C855", background_color="#292923")],
-                [sg.InputText(key="-PLAYERTWOINPUT-")],
+                [sg.InputText(key="-PLAYERTWOINPUT-", enable_events=True)],
                 # [sg.Output()],
                 [sg.Button('Ok'), sg.Button(print_message(spanish=1, message_code=10), key="-INSTRUCTIONS-"), sg.Button(print_message(spanish=1, message_code=3), key="-CANCEL-"), sg.Image(toggle_btn_on, key='-TOGGLE-GRAPHIC-', enable_events=True, metadata=False, background_color="#292923", size=(50,50), zoom=1, subsample=20),
                  sg.Text(print_message(spanish=1, message_code=4), background_color="#292923", key="-SPANISH-", text_color="#E7C855")],
@@ -206,6 +212,8 @@ def main():
         event, values = introWindow.read()
         # if user closes window or clicks cancel
 
+
+        introWindow["-PLAYERTWOINPUT-"].bind("<Return>", "_Enter")
         if event == sg.WIN_CLOSED or event == "-CANCEL-":
             break
 
@@ -230,7 +238,7 @@ def main():
                 introWindow["-INSTRUCTIONSINFO-"].update("")
                 instructions = False
 
-        elif event == "Ok":
+        elif event == "Ok" or event == "-PLAYERTWOINPUT-" + "_Enter":
 
             player1 = values["-PLAYERONEINPUT-"]
             player2 = values["-PLAYERTWOINPUT-"]
@@ -261,8 +269,15 @@ def main():
             seconds = 10
             time_init = time.time()
 
+            gameWindow["-PLAYERONEWORDINPUT-"].set_focus()
+
+            playerOneWords = []
+            playerTwoWords = []
+
             while True:
                 gameEvent, gameValues = gameWindow.read(timeout=1000)
+                gameWindow["-PLAYERONEWORDINPUT-"].bind("<Return>", "_Enter")
+                gameWindow["-PLAYERTWOWORDINPUT-"].bind("<Return>", "_Enter")
 
                 winner = None
 
@@ -271,7 +286,6 @@ def main():
                     [sg.Push(), sg.Text(winner, key="-WINNER-"), sg.Push()],
                     [sg.Button(print_message(spanish, 3), key="-ENDEXIT-"), sg.Button(print_message(spanish, 9), key="-REPEAT-")]
                 ]
-
 
                 if gameEvent == sg.TIMEOUT_EVENT:
                     new_time = time.time()
@@ -291,7 +305,7 @@ def main():
                 if gameEvent == sg.WIN_CLOSED or gameEvent == "-CANCEL-":
                     # gameWindow.close()
                     break
-                elif gameEvent == "-PLAYER1ENTER-" and turn == 1:
+                elif (gameEvent == "-PLAYER1ENTER-" or gameEvent == "-PLAYERONEWORDINPUT-" + "_Enter") and turn == 1:
                     gameWindow.extend_layout(gameWindow["-PLAYERONEROW-"], [create_row(row_counter, "ONE")])
                     gameWindow[("-WORDONE-", row_counter)].update(gameValues["-PLAYERONEWORDINPUT-"])
                     word = gameValues["-PLAYERONEWORDINPUT-"]
@@ -303,6 +317,8 @@ def main():
                         gameWindow["-PLAYERONEWORDINPUT-"].update(lastLetter2)
                     elif not is_word(DICT, word):
                         gameWindow["-ERROROUTONE-"].update(print_error(spanish, 4, incorrect_word={word}))
+                    elif word in playerOneWords or word in playerTwoWords:
+                        gameWindow["-ERROROUTONE-"].update(print_error(spanish, 6))
 
                     else:
                         gameWindow["-PLAYERONEPOINTS-"].update(f"Points: {playerOnePoints - process_input(gameValues["-PLAYERONEWORDINPUT-"])}")
@@ -313,8 +329,10 @@ def main():
                         turn = 2
                         seconds = 10
                         gameWindow["-TIMER-"].update(seconds)
+                        gameWindow["-PLAYERTWOWORDINPUT-"].set_focus()
+                        playerOneWords.append(word)
 
-                elif gameEvent == "-PLAYER2ENTER-" and turn == 2:
+                elif (gameEvent == "-PLAYER2ENTER-" or gameEvent == "-PLAYERTWOWORDINPUT-" + "_Enter") and turn == 2:
                     gameWindow.extend_layout(gameWindow["-PLAYERTWOROW-"], [create_row(row_counter, "TWO")])
                     gameWindow[("-WORDTWO-", row_counter)].update(gameValues["-PLAYERTWOWORDINPUT-"])
                     word = gameValues["-PLAYERTWOWORDINPUT-"]
@@ -325,6 +343,8 @@ def main():
                         gameWindow["-PLAYERTWOWORDINPUT-"].update(lastLetter1)
                     elif not is_word(DICT, word):
                         gameWindow["-ERROROUTONE-"].update(print_error(spanish, 4, incorrect_word={word}))
+                    elif word in playerOneWords or word in playerTwoWords:
+                        gameWindow["-ERROROUTONE-"].update(print_error(spanish, 6))
                     else:
                         gameWindow["-PLAYERTWOPOINTS-"].update(f"Points: {playerTwoPoints - process_input(gameValues["-PLAYERTWOWORDINPUT-"])}")
                         playerTwoPoints -= process_input(gameValues["-PLAYERTWOWORDINPUT-"])
@@ -335,6 +355,8 @@ def main():
                         turn = 1
                         seconds = 10
                         gameWindow["-TIMER-"].update(seconds)
+                        gameWindow["-PLAYERONEWORDINPUT-"].set_focus()
+                        playerTwoWords.append(word)
                 
                 elif (gameEvent == "-PLAYER1ENTER-" and turn == 2) or (gameEvent == "-PLAYER2ENTER-" and turn == 1):
                     gameWindow["-ERROROUTONE-"].update(print_error(spanish, 5))
