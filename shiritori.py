@@ -69,6 +69,7 @@ def is_word(d, word):
 # 9 = Again
 # 10 = Instructions
 # 11 = Rules
+# 12 = English
 
 def print_message(spanish, message_code):
     message = ""
@@ -104,6 +105,8 @@ def print_message(spanish, message_code):
             - Tus puntos bajan por la longitud de tu palabra.
             - El primer jugador que tiene 0 o menos puntos gana!
             """
+        elif message_code == 12:
+            message = "Inglés"
 
     else:
         if message_code == 1:
@@ -136,6 +139,8 @@ def print_message(spanish, message_code):
             - Your points lower relative correspondingly with the length of your word.
             - The first player to reach 0 or less points wins!
             """
+        elif message_code == 12:
+            message = "English"
 
     return message
 
@@ -188,7 +193,9 @@ def main():
                 [sg.Text(print_message(spanish=1, message_code=2), key="-PLAYERTWONAME-", text_color="#E7C855", background_color="#292923")],
                 [sg.InputText(key="-PLAYERTWOINPUT-", enable_events=True)],
                 # [sg.Output()],
-                [sg.Button('Ok'), sg.Button(print_message(spanish=1, message_code=10), key="-INSTRUCTIONS-"), sg.Button(print_message(spanish=1, message_code=3), key="-CANCEL-"), sg.Image(toggle_btn_on, key='-TOGGLE-GRAPHIC-', enable_events=True, metadata=False, background_color="#292923", size=(50,50), zoom=1, subsample=20),
+                [sg.Button('Ok'), sg.Button(print_message(spanish=1, message_code=10), key="-INSTRUCTIONS-"),
+                 sg.Button(print_message(spanish=1, message_code=3), key="-CANCEL-"), sg.Text(print_message(spanish=1, message_code=12), key="-ENGLISH-", background_color="#292923", text_color="#E7C855"),
+                 sg.Image(toggle_btn_on, key='-TOGGLE-GRAPHIC-', enable_events=True, metadata=False, background_color="#292923", size=(50,50), zoom=1, subsample=20),
                  sg.Text(print_message(spanish=1, message_code=4), background_color="#292923", key="-SPANISH-", text_color="#E7C855")],
                  [sg.Text("", key="-INSTRUCTIONSINFO-", text_color="#E7C855", background_color="#292923")]
                  
@@ -225,6 +232,8 @@ def main():
             introWindow["-PLAYERTWONAME-"].update(print_message(spanish, 2))
             introWindow["-CANCEL-"].update(print_message(spanish, 3))
             introWindow["-SPANISH-"].update(print_message(spanish, 4))
+            introWindow["-ENGLISH-"].update(print_message(spanish, 12))
+            introWindow["-INSTRUCTIONS-"].update(print_message(spanish, 10))
             if instructions == True:
                 introWindow["-INSTRUCTIONSINFO-"].update(print_message(spanish, 11))
 
