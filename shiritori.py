@@ -283,6 +283,8 @@ def main():
             playerOneWords = []
             playerTwoWords = []
 
+            correctLastLetter = ''
+
             while True:
                 gameEvent, gameValues = gameWindow.read(timeout=1000)
                 gameWindow["-PLAYERONEWORDINPUT-"].bind("<Return>", "_Enter")
@@ -307,8 +309,19 @@ def main():
                         
                 if seconds <= 0:
                     gameWindow["-ERROROUTONE-"].update(print_error(spanish, 1))
-                    gameWindow["-PLAYERONEWORDINPUT-"].update(lastLetter1) if turn == 2 else gameWindow["-PLAYERTWOWORDINPUT-"].update(lastLetter2)
-                    turn = 2 if turn == 1 else 1
+                    
+                    if turn == 2:
+                        gameWindow["-PLAYERONEWORDINPUT-"].update(lastLetter1) 
+                        correctLastLetter = lastLetter1
+                        gameWindow["-PLAYERONEWORDINPUT-"].set_focs()
+                        turn = 1
+                    else: 
+                        gameWindow["-PLAYERTWOWORDINPUT-"].update(lastLetter2)
+                        correctLastLetter = lastLetter2
+                        gameWindow["-PLAYERTWOWORDINPUT-"].set_focus()
+                        turn = 2
+
+                        
                     seconds = 10
 
                 if gameEvent == sg.WIN_CLOSED or gameEvent == "-CANCEL-":
@@ -321,7 +334,7 @@ def main():
 
                     if len(word) < 4:
                         gameWindow["-ERROROUTONE-"].update(print_error(spanish, 2))
-                    elif word[0] != lastLetter2 and lastLetter2 != '':
+                    elif word[0] != correctLastLetter and correctLastLetter != '':
                         gameWindow["-ERROROUTONE-"].update(print_error(spanish, 3, lastLetter2))
                         gameWindow["-PLAYERONEWORDINPUT-"].update(lastLetter2)
                     elif not is_word(DICT, word):
@@ -333,7 +346,8 @@ def main():
                         gameWindow["-PLAYERONEPOINTS-"].update(f"Points: {playerOnePoints - process_input(gameValues["-PLAYERONEWORDINPUT-"])}")
                         playerOnePoints -= process_input(gameValues["-PLAYERONEWORDINPUT-"])
                         lastLetter1 = word[len(word) - 1]
-                        gameWindow["-PLAYERTWOWORDINPUT-"].update(lastLetter1)
+                        correctLastLetter = lastLetter1
+                        gameWindow["-PLAYERTWOWORDINPUT-"].update(correctLastLetter)
                         gameWindow["-ERROROUTONE-"].update("")
                         turn = 2
                         seconds = 10
@@ -347,7 +361,7 @@ def main():
                     word = gameValues["-PLAYERTWOWORDINPUT-"]
                     if len(word) < 4:
                         gameWindow["-ERROROUTONE-"].update(print_error(spanish, 2))
-                    elif word[0] != lastLetter1 and lastLetter1 != '':
+                    elif word[0] != correctLastLetter and correctLastLetter != '':
                         gameWindow["-ERROROUTONE-"].update(print_error(spanish, 3, lastLetter1))
                         gameWindow["-PLAYERTWOWORDINPUT-"].update(lastLetter1)
                     elif not is_word(DICT, word):
@@ -359,7 +373,8 @@ def main():
                         playerTwoPoints -= process_input(gameValues["-PLAYERTWOWORDINPUT-"])
                         row_counter += 1
                         lastLetter2 = word[len(word) - 1]
-                        gameWindow["-PLAYERONEWORDINPUT-"].update(lastLetter2)
+                        correctLastLetter = lastLetter2
+                        gameWindow["-PLAYERONEWORDINPUT-"].update(correctLastLetter)
                         gameWindow["-ERROROUTONE-"].update("")
                         turn = 1
                         seconds = 10
