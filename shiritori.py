@@ -150,6 +150,7 @@ def print_message(spanish, message_code):
 # 3 = Word doesn't start with correct letter
 # 4 = Word doesn't exist
 # 5 = Not your turn
+# 6 = Same Word 
 
 def print_error(spanish, code, correct_letter = "", incorrect_word=""):
     message = ""
@@ -321,7 +322,7 @@ def main():
                         gameWindow["-PLAYERTWOWORDINPUT-"].set_focus()
                         turn = 2
 
-                        
+
                     seconds = 10
 
                 if gameEvent == sg.WIN_CLOSED or gameEvent == "-CANCEL-":
