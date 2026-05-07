@@ -342,6 +342,7 @@ def main():
                         gameWindow["-ERROROUTONE-"].update(print_error(spanish, 4, incorrect_word={word}))
                     elif word in playerOneWords or word in playerTwoWords:
                         gameWindow["-ERROROUTONE-"].update(print_error(spanish, 6))
+                        gameWindow["-PLAYERONEWORDINPUT-"].update(correctLastLetter) if turn == 1 else gameWindow["-PLAYERTWOWORDINPUT-"].update(correctLastLetter)
 
                     else:
                         gameWindow["-PLAYERONEPOINTS-"].update(f"Points: {playerOnePoints - process_input(gameValues["-PLAYERONEWORDINPUT-"])}")
@@ -369,6 +370,7 @@ def main():
                         gameWindow["-ERROROUTONE-"].update(print_error(spanish, 4, incorrect_word={word}))
                     elif word in playerOneWords or word in playerTwoWords:
                         gameWindow["-ERROROUTONE-"].update(print_error(spanish, 6))
+                        gameWindow["-PLAYERONEWORDINPUT-"].update(correctLastLetter) if turn == 1 else gameWindow["-PLAYERTWOWORDINPUT-"].update(correctLastLetter)
                     else:
                         gameWindow["-PLAYERTWOPOINTS-"].update(f"Points: {playerTwoPoints - process_input(gameValues["-PLAYERTWOWORDINPUT-"])}")
                         playerTwoPoints -= process_input(gameValues["-PLAYERTWOWORDINPUT-"])
